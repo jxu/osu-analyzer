@@ -110,23 +110,19 @@ def extract_spinner_movement(replay, beatmap):
 
     return spinners_coords
 
+
 class Callback(object):
     def __init__(self):
         self.data = None
+        self.quit = False
 
     def key(self, event):
         """tkinter key event"""
-        print("Pressed", repr(event.char))
-        self.data = repr(event.char)
+        print("Pressed", str(event.char))
+        self.data = str(event.char)
 
+        self.quit = True
 
-def draw_frame(w, coords, frame_delay):
-    w.create_line(coords[w.frame][0], coords[w.frame][1],
-                  coords[w.frame+1][0], coords[w.frame+1][1])
-
-    w.frame += 1
-    if w.frame < len(coords)-1:
-        w.after(frame_delay, draw_frame, w, coords, frame_delay)
 
 
 def visualize(replay, coords, width=512, height=384, animate=True):
@@ -142,6 +138,23 @@ def visualize(replay, coords, width=512, height=384, animate=True):
     w.frame = 0
     frame_delay = 20 if animate else 0
 
+    def draw_frame():
+        w.create_line(coords[w.frame][0], coords[w.frame][1],
+                      coords[w.frame + 1][0], coords[w.frame + 1][1])
+
+        w.frame += 1
+        if w.frame < len(coords) - 1:
+            w.after(frame_delay, draw_frame)
+        else:
+            w.after(0, done_wait())
+
+    def done_wait():
+        if callback.quit:
+            master.destroy()
+
+        w.after(0, done_wait)
+
+
     # Draw center
     w.create_line(width/2 - 5, height/2, width/2 + 5, height/2, fill="red")
     w.create_line(width/2, height/2 - 5, width/2, height/2 + 5, fill="red")
@@ -151,7 +164,8 @@ def visualize(replay, coords, width=512, height=384, animate=True):
     info_str = replay.player_name + '\n' + replay.timestamp.strftime(timefmt)
     w.create_text(5, height-20, text=info_str, anchor=W)
 
-    draw_frame(w, coords, frame_delay)
+
+    draw_frame()
     mainloop()
 
     return callback.data
