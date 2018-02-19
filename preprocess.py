@@ -82,16 +82,17 @@ class Beatmap(object):
 
 
 def extract_spinner_movement(replay, beatmap):
-    """Returns list of lists, with each sublist consisting of coordinate pairs"""
-    spinner_times = []  # start and end in ms
-    spinner_coords = []
+    """Returns list of lists, with each sublist representing 1 spinner
+    (consisting of coordinate pairs)"""
+    spinners_times = []  # start and end in ms
+    spinners_coords = []
 
     for hitobj in beatmap.hit_objects:
         if hitobj.type_decoded == HitObjectType.spinner:
-            spinner_times.append((hitobj.time, hitobj.end_time))
-            spinner_coords.append([])
+            spinners_times.append((hitobj.time, hitobj.end_time))
+            spinners_coords.append([])
 
-    print(spinner_times)
+    print("Spinner times:", spinners_times)
 
 
     current_time = 0
@@ -101,14 +102,13 @@ def extract_spinner_movement(replay, beatmap):
 
         # Assuming current_time is increasing, this can be made more efficient
         # TODO: handle large negative offsets
-        for i in range(len(spinner_times)):
-            if spinner_times[i][0] <= current_time <= spinner_times[i][1]:
-                spinner_coords[i].append((event.x, event.y))
+        for i in range(len(spinners_times)):
+            if spinners_times[i][0] <= current_time <= spinners_times[i][1]:
+                spinners_coords[i].append((event.x, event.y))
 
-    for x in spinner_coords:
-        print(len(x), x)
+    print("Spinner lengths (frames):", [len(s) for s in spinners_coords])
 
-    return spinner_coords
+    return spinners_coords
 
 
 def key(event):
@@ -169,10 +169,10 @@ def main():
         if replay.beatmap_hash in beatmap_dict:
             print("Found matching beatmap")
             beatmap = beatmap_dict[replay.beatmap_hash]
-            spinner_coords = extract_spinner_movement(replay, beatmap)
+            spinners_coords = extract_spinner_movement(replay, beatmap)
 
-
-            visualize(replay, spinner_coords[0])
+            for coords in spinners_coords:
+                visualize(replay, coords)
 
         else:
             print("No matching beatmap found! Skipping...")
