@@ -110,10 +110,23 @@ def extract_spinner_movement(replay, beatmap):
 
     return spinners_coords
 
+class Callback(object):
+    def __init__(self):
+        self.data = None
 
-def key(event):
-    """tkinter key event"""
-    print("pressed", repr(event.char))
+    def key(self, event):
+        """tkinter key event"""
+        print("Pressed", repr(event.char))
+        self.data = repr(event.char)
+
+
+def draw_frame(w, coords, frame_delay):
+    w.create_line(coords[w.frame][0], coords[w.frame][1],
+                  coords[w.frame+1][0], coords[w.frame+1][1])
+
+    w.frame += 1
+    if w.frame < len(coords)-1:
+        w.after(frame_delay, draw_frame, w, coords, frame_delay)
 
 
 def visualize(replay, coords, width=512, height=384, animate=True):
@@ -122,20 +135,12 @@ def visualize(replay, coords, width=512, height=384, animate=True):
 
     w = Canvas(master, width=width, height=height)
     w.focus_set()
-    w.bind("<Key>", key)
+    callback = Callback()
+    w.bind("<Key>", callback.key)
     w.pack()
 
     w.frame = 0
     frame_delay = 20 if animate else 0
-
-    def draw_frame():
-        w.create_line(coords[w.frame][0], coords[w.frame][1],
-                      coords[w.frame+1][0], coords[w.frame+1][1])
-
-        w.frame += 1
-        if w.frame < len(coords)-1:
-            w.after(frame_delay, draw_frame)
-
 
     # Draw center
     w.create_line(width/2 - 5, height/2, width/2 + 5, height/2, fill="red")
@@ -146,9 +151,10 @@ def visualize(replay, coords, width=512, height=384, animate=True):
     info_str = replay.player_name + '\n' + replay.timestamp.strftime(timefmt)
     w.create_text(5, height-20, text=info_str, anchor=W)
 
-
-    draw_frame()
+    draw_frame(w, coords, frame_delay)
     mainloop()
+
+    return callback.data
 
 
 def main():
@@ -172,7 +178,8 @@ def main():
             spinners_coords = extract_spinner_movement(replay, beatmap)
 
             for coords in spinners_coords:
-                visualize(replay, coords)
+                data = visualize(replay, coords)
+                print("Returning key from visualization", data)
 
         else:
             print("No matching beatmap found! Skipping...")
