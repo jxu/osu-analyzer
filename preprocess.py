@@ -8,7 +8,8 @@ from tkinter import *
 # Folder locations to use
 LEGIT_DIR = "legit_spin"
 CHEAT_DIR = "cheat_spin"
-REPLAY_DIR = "replays/to_process"
+PROCESS_DIR = "replays/to_process"
+DONE_DIR = "replays/done"
 BEATMAP_DIR = "spinner_beatmaps"
 
 # Key mappings
@@ -206,14 +207,16 @@ def main():
 
 
     # Process replays
-    for filename in os.listdir(REPLAY_DIR):
+    for filename in os.listdir(PROCESS_DIR):
         print("Processing replay " + str(filename) + "... ", end='')
-        replay = parse_replay_file(os.path.join(REPLAY_DIR, filename))
+        replay = parse_replay_file(os.path.join(PROCESS_DIR, filename))
         replay.filename = filename  # Save filename from osu page
+
 
         # Found matching beatmap
         if replay.beatmap_hash in beatmap_dict:
             print("Found matching beatmap")
+            move_done = False 
             beatmap = beatmap_dict[replay.beatmap_hash]
             spinners_coords = extract_spinner_movement(replay, beatmap)
 
@@ -225,10 +228,17 @@ def main():
 
                 if key_data == LEGIT_KEY:
                     write_coords_csv(replay, i, coords, LEGIT_DIR)
+                    move_done = True
                 elif key_data == CHEAT_KEY:
                     write_coords_csv(replay, i, coords, CHEAT_DIR)
+                    move_done = True
                 else:
                     raise ValueError("Bad returned key")
+
+            if move_done:  # Move to done dir
+                os.rename(os.path.join(PROCESS_DIR, filename),
+                          os.path.join(DONE_DIR, filename))
+                print("Moved replay to", os.path.join(DONE_DIR, filename))
 
 
         else:
