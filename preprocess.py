@@ -6,8 +6,12 @@ from tkinter import *
 
 # Folder locations to use
 LEGIT_DIR = "replay_examples/legit"
-REPLAY_DIR = "replay_examples/tmp"
+NOT_LEGIT_DIR = "replay_examples/not_legit"
+REPLAY_DIR = "replay_examples/to_process"
 BEATMAP_DIR = "spinner_beatmaps"
+
+LEGIT_KEY = 'a'
+NOT_LEGIT_KEY = 'd'
 
 
 def split_after(s, sep):
@@ -118,14 +122,14 @@ class Callback(object):
 
     def key(self, event):
         """tkinter key event"""
-        print("Pressed", str(event.char))
-        self.data = str(event.char)
+        print("Pressed", event.char)
+        self.data = event.char
 
-        self.quit = True
+        if event.char in (LEGIT_KEY, NOT_LEGIT_KEY):
+            self.quit = True
 
 
-
-def visualize(replay, coords, width=512, height=384, animate=True):
+def visualize(replay, coords, beatmap, width=512, height=384, animate=True):
     """Simple tkinter spinner cursor movement drawer"""
     master = Tk()
 
@@ -151,6 +155,7 @@ def visualize(replay, coords, width=512, height=384, animate=True):
     def done_wait():
         if callback.quit:
             master.destroy()
+            return
 
         w.after(0, done_wait)
 
@@ -160,8 +165,8 @@ def visualize(replay, coords, width=512, height=384, animate=True):
     w.create_line(width/2, height/2 - 5, width/2, height/2 + 5, fill="red")
 
     # Add info text
-    timefmt = "%Y-%m-%d %H:%M:%S"
-    info_str = replay.player_name + '\n' + replay.timestamp.strftime(timefmt)
+
+    info_str = replay.player_name + '\n' + str(len(coords)) + " frames"
     w.create_text(5, height-20, text=info_str, anchor=W)
 
 
@@ -192,8 +197,10 @@ def main():
             spinners_coords = extract_spinner_movement(replay, beatmap)
 
             for coords in spinners_coords:
-                data = visualize(replay, coords)
+                data = visualize(replay, coords, beatmap)
                 print("Returning key from visualization", data)
+
+
 
         else:
             print("No matching beatmap found! Skipping...")
