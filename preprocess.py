@@ -8,7 +8,7 @@ from tkinter import *
 # Folder locations to use
 LEGIT_DIR = "legit_spin"
 CHEAT_DIR = "cheat_spin"
-REPLAY_DIR = "replay_examples/to_process"
+REPLAY_DIR = "replays/to_process"
 BEATMAP_DIR = "spinner_beatmaps"
 
 # Key mappings
@@ -183,7 +183,7 @@ def visualize(replay, coords, beatmap, width=512, height=384, animate=True):
 def write_coords_csv(replay, spinner_ind, coords, dir):
     os.makedirs(dir, exist_ok=True)
     filename = "{}.{}.{}.csv".format(
-        replay.player_name, replay.beatmap_hash, spinner_ind)
+        replay.player_name, replay.filename, spinner_ind)
     path = os.path.join(dir, filename)
 
     with open(path, 'w') as csvfile:
@@ -209,6 +209,7 @@ def main():
     for filename in os.listdir(REPLAY_DIR):
         print("Processing replay " + str(filename) + "... ", end='')
         replay = parse_replay_file(os.path.join(REPLAY_DIR, filename))
+        replay.filename = filename  # Save filename from osu page
 
         # Found matching beatmap
         if replay.beatmap_hash in beatmap_dict:
