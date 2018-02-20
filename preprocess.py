@@ -11,6 +11,7 @@ CHEAT_DIR = "cheat_spin"
 REPLAY_DIR = "replay_examples/to_process"
 BEATMAP_DIR = "spinner_beatmaps"
 
+# Key mappings
 LEGIT_KEY = 'a'
 CHEAT_KEY = 'd'
 
@@ -30,7 +31,7 @@ class Beatmap(object):
     def __init__(self, beatmap_path):
         self.path = beatmap_path
 
-        line_num = 0  # Internal line num counter
+        _ln = 0  # Internal line num counter
 
         with open(beatmap_path) as f:
             lines = f.read().splitlines()
@@ -38,31 +39,31 @@ class Beatmap(object):
         self.format_version = int(split_after(lines[0], 'v'))
 
         # Fast-forward to metadata
-        while lines[line_num] != "[Metadata]":
-            line_num += 1
+        while lines[_ln] != "[Metadata]":
+            _ln += 1
 
-        self.title           = split_after(lines[line_num+1], "Title:")
-        self.title_unicode   = split_after(lines[line_num+2], "TitleUnicode:")
-        self.artist          = split_after(lines[line_num+3], "Artist:")
-        self.artist_unicode  = split_after(lines[line_num+4], "ArtistUnicode:")
-        self.creator         = split_after(lines[line_num+5], "Creator:")
-        self.version         = split_after(lines[line_num+6], "Version:")
-        self.source          = split_after(lines[line_num+7], "Source:")
-        self.tags            = split_after(lines[line_num+8], "Tags:").split(' ')
-        self.beatmap_id      = int(split_after(lines[line_num+9], "BeatmapID:"))
-        self.beatmap_set_id  = int(split_after(lines[line_num+10], "BeatmapSetID:"))
+        self.title           = split_after(lines[_ln+1], "Title:")
+        self.title_unicode   = split_after(lines[_ln+2], "TitleUnicode:")
+        self.artist          = split_after(lines[_ln+3], "Artist:")
+        self.artist_unicode  = split_after(lines[_ln+4], "ArtistUnicode:")
+        self.creator         = split_after(lines[_ln+5], "Creator:")
+        self.version         = split_after(lines[_ln+6], "Version:")
+        self.source          = split_after(lines[_ln+7], "Source:")
+        self.tags            = split_after(lines[_ln+8], "Tags:").split(' ')
+        self.beatmap_id      = int(split_after(lines[_ln+9], "BeatmapID:"))
+        self.beatmap_set_id  = int(split_after(lines[_ln+10], "BeatmapSetID:"))
 
         # Fast-forward to hit objects
-        while lines[line_num] != "[HitObjects]":
-            line_num += 1
+        while lines[_ln] != "[HitObjects]":
+            _ln += 1
 
-        line_num += 1
+        _ln += 1
 
         self.hit_objects = []
 
-        while line_num != len(lines):
+        while _ln != len(lines):
             h = HitObject()
-            vals = lines[line_num].split(',')
+            vals = lines[_ln].split(',')
             h.x, h.y, h.time, h.type, h.hit_sound = \
                 (int(v) for v in vals[:5])
 
@@ -83,7 +84,7 @@ class Beatmap(object):
                 # Addition not implemented
 
             self.hit_objects.append(h)
-            line_num += 1
+            _ln += 1
 
 
 
@@ -132,7 +133,7 @@ class Callback(object):
 
 
 def visualize(replay, coords, beatmap, width=512, height=384, animate=True):
-    """Simple tkinter spinner cursor movement drawer"""
+    """Simple tkinter spinner cursor movement drawer. Returns key press data"""
     master = Tk()
 
     w = Canvas(master, width=width, height=height)
