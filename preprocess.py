@@ -169,7 +169,7 @@ def visualize(replay, coords, beatmap, width=512, height=384, animate=True):
     # Add info text
     key_str = "Legit: {}\nCheat: {}".format(LEGIT_KEY, CHEAT_KEY)
     info_str = replay.player_name + '\n' + beatmap.path
-    w.create_text(5, height-20, text=info_str, anchor=W)
+    w.create_text(5, height-30, text=info_str, anchor=W, width=width)
     w.create_text(5, 20, text=key_str, anchor=W)
 
 
