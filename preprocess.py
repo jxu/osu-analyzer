@@ -2,16 +2,17 @@ import os
 from osrparse import parse_replay_file
 from enum import Enum
 import hashlib
+import csv
 from tkinter import *
 
 # Folder locations to use
-LEGIT_DIR = "replay_examples/legit"
-NOT_LEGIT_DIR = "replay_examples/not_legit"
+LEGIT_DIR = "legit_spin"
+CHEAT_DIR = "cheat_spin"
 REPLAY_DIR = "replay_examples/to_process"
 BEATMAP_DIR = "spinner_beatmaps"
 
 LEGIT_KEY = 'a'
-NOT_LEGIT_KEY = 'd'
+CHEAT_KEY = 'd'
 
 
 def split_after(s, sep):
@@ -27,6 +28,7 @@ class HitObject(object):
 class Beatmap(object):
     """Incomplete Beatmap class to store info about a beatmap."""
     def __init__(self, beatmap_path):
+        self.path = beatmap_path
 
         line_num = 0  # Internal line num counter
 
@@ -125,7 +127,7 @@ class Callback(object):
         print("Pressed", event.char)
         self.data = event.char
 
-        if event.char in (LEGIT_KEY, NOT_LEGIT_KEY):
+        if event.char in (LEGIT_KEY, CHEAT_KEY):
             self.quit = True
 
 
@@ -140,7 +142,7 @@ def visualize(replay, coords, beatmap, width=512, height=384, animate=True):
     w.pack()
 
     w.frame = 0
-    frame_delay = 20 if animate else 0
+    frame_delay = 10 if animate else 0
 
     def draw_frame():
         w.create_line(coords[w.frame][0], coords[w.frame][1],
@@ -165,15 +167,30 @@ def visualize(replay, coords, beatmap, width=512, height=384, animate=True):
     w.create_line(width/2, height/2 - 5, width/2, height/2 + 5, fill="red")
 
     # Add info text
-
-    info_str = replay.player_name + '\n' + str(len(coords)) + " frames"
+    key_str = "Legit: {}\nCheat: {}".format(LEGIT_KEY, CHEAT_KEY)
+    info_str = replay.player_name + '\n' + beatmap.path
     w.create_text(5, height-20, text=info_str, anchor=W)
+    w.create_text(5, 20, text=key_str, anchor=W)
 
 
     draw_frame()
     mainloop()
 
     return callback.data
+
+
+def write_coords_csv(replay, spinner_ind, coords, dir):
+    os.makedirs(dir, exist_ok=True)
+    filename = "{}.{}.{}.csv".format(
+        replay.player_name, replay.beatmap_hash, spinner_ind)
+    path = os.path.join(dir, filename)
+
+    with open(path, 'w') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        for coord_pair in coords:
+            writer.writerow(coord_pair)
+
+    print("Wrote csv to", path)
 
 
 def main():
@@ -191,15 +208,25 @@ def main():
     for filename in os.listdir(REPLAY_DIR):
         print("Processing replay " + str(filename) + "... ", end='')
         replay = parse_replay_file(os.path.join(REPLAY_DIR, filename))
+
+        # Found matching beatmap
         if replay.beatmap_hash in beatmap_dict:
             print("Found matching beatmap")
             beatmap = beatmap_dict[replay.beatmap_hash]
             spinners_coords = extract_spinner_movement(replay, beatmap)
 
-            for coords in spinners_coords:
-                data = visualize(replay, coords, beatmap)
-                print("Returning key from visualization", data)
+            # Handle multiple spinners per map
+            for i in range(len(spinners_coords)):
+                coords = spinners_coords[i]
+                key_data = visualize(replay, coords, beatmap)
+                print("Returning key from visualization", key_data)
 
+                if key_data == LEGIT_KEY:
+                    write_coords_csv(replay, i, coords, LEGIT_DIR)
+                elif key_data == CHEAT_KEY:
+                    write_coords_csv(replay, i, coords, CHEAT_DIR)
+                else:
+                    raise ValueError("Bad returned key")
 
 
         else:
