@@ -43,19 +43,14 @@ class Beatmap(object):
         while lines[_ln] != "[Metadata]":
             _ln += 1
 
-        self.title           = split_after(lines[_ln+1], "Title:")
-        self.title_unicode   = split_after(lines[_ln+2], "TitleUnicode:")
-        self.artist          = split_after(lines[_ln+3], "Artist:")
-        self.artist_unicode  = split_after(lines[_ln+4], "ArtistUnicode:")
-        self.creator         = split_after(lines[_ln+5], "Creator:")
-        self.version         = split_after(lines[_ln+6], "Version:")
-        self.source          = split_after(lines[_ln+7], "Source:")
-        self.tags            = split_after(lines[_ln+8], "Tags:").split(' ')
-        self.beatmap_id      = int(split_after(lines[_ln+9], "BeatmapID:"))
-        self.beatmap_set_id  = int(split_after(lines[_ln+10], "BeatmapSetID:"))
-
-        # Fast-forward to hit objects
+        self.metadata = dict()
         while lines[_ln] != "[HitObjects]":
+            if ":" in lines[_ln]:
+                field, s = lines[_ln].split(":")
+                self.metadata[field] = s
+                # future: split tags by spaces
+                # Convert beatmap_id and beatmap_set_id to int
+
             _ln += 1
 
         _ln += 1
