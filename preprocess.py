@@ -15,6 +15,7 @@ BEATMAP_DIR = "spinner_beatmaps"
 # Key mappings
 LEGIT_KEY = 'a'
 CHEAT_KEY = 'd'
+SKIP_KEY = 'g'
 
 
 def split_after(s, sep):
@@ -124,7 +125,7 @@ class Callback(object):
         print("Pressed", event.char)
         self.data = event.char
 
-        if event.char in (LEGIT_KEY, CHEAT_KEY):
+        if event.char in (LEGIT_KEY, CHEAT_KEY, SKIP_KEY):
             self.quit = True
 
 
@@ -164,7 +165,8 @@ def visualize(replay, coords, beatmap, width=512, height=384, animate=True):
     w.create_line(width/2, height/2 - 5, width/2, height/2 + 5, fill="red")
 
     # Add info text
-    key_str = "Legit: {}\nCheat: {}".format(LEGIT_KEY, CHEAT_KEY)
+    key_str = "Legit: {}\nCheat: {}\nSkip: {}".format(
+        LEGIT_KEY, CHEAT_KEY, SKIP_KEY)
     info_str = replay.player_name + '\n' + beatmap.path
     w.create_text(5, height-30, text=info_str, anchor=W, width=width)
     w.create_text(5, 20, text=key_str, anchor=W)
@@ -227,6 +229,8 @@ def main():
                 elif key_data == CHEAT_KEY:
                     write_coords_csv(replay, i, coords, CHEAT_DIR)
                     move_done = True
+                elif key_data == SKIP_KEY:
+                    print("Skipping")
                 else:
                     raise ValueError("Bad returned key")
 
