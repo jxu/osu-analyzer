@@ -1,0 +1,2 @@
+#!/bin/sh
+find ~/Downloads/*.osr -mtime -1 -exec mv -t replays/to_process/ {} +
