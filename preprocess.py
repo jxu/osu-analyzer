@@ -11,6 +11,7 @@ CHEAT_DIR = "cheat_spin"
 PROCESS_DIR = "replays/to_process"
 DONE_DIR = "replays/done"
 BEATMAP_DIR = "spinner_beatmaps"
+EXPORT_DIR = "export"
 
 # Key mappings
 LEGIT_KEY = 'a'
@@ -29,7 +30,8 @@ class HitObject(object):
 
 
 class Beatmap(object):
-    """Incomplete Beatmap class to store info about a beatmap."""
+    """Incomplete Beatmap class to store info about a beatmap.
+    Currently records only spinner info."""
     def __init__(self, beatmap_path):
         self.path = beatmap_path
 
@@ -116,6 +118,7 @@ def extract_spinner_movement(replay, beatmap):
 
 
 class Callback(object):
+    """Callback object used for tkinter key press"""
     def __init__(self):
         self.data = None
         self.quit = False
@@ -129,8 +132,11 @@ class Callback(object):
             self.quit = True
 
 
-def visualize(replay, coords, beatmap, width=512, height=384, animate=True):
+def visualize(replay, coords, beatmap, width=512, height=384, animate=True,
+              spinner_ind=None, export_ps=False):
     """Simple tkinter spinner cursor movement drawer. Returns key press data"""
+
+    # Setup tkinter canvas
     master = Tk()
 
     w = Canvas(master, width=width, height=height)
@@ -139,12 +145,26 @@ def visualize(replay, coords, beatmap, width=512, height=384, animate=True):
     w.bind("<Key>", callback.key)
     w.pack()
 
+    # Canvas variables
     w.frame = 0
     frame_delay = 10 if animate else 0
 
     def draw_frame():
+        # Draw one frame of cursor movement
         w.create_line(coords[w.frame][0], coords[w.frame][1],
-                      coords[w.frame + 1][0], coords[w.frame + 1][1])
+                      coords[w.frame+1][0], coords[w.frame+1][1])
+
+        # Export ps test
+        if export_ps:
+            export_filename = \
+                "{}.{}_{}.ps".format(replay.filename, spinner_ind, w.frame)
+            w.update()
+            file = os.path.join(EXPORT_DIR, export_filename)
+            ps = w.postscript(file=file,
+                              colormode="color")
+            #with open(file, 'w') as f: f.write(ps)
+            #w.update()
+
 
         w.frame += 1
         if w.frame < len(coords) - 1:
@@ -152,12 +172,13 @@ def visualize(replay, coords, beatmap, width=512, height=384, animate=True):
         else:
             w.after(0, done_wait())
 
+
     def done_wait():
         if callback.quit:
             master.destroy()
             return
 
-        w.after(0, done_wait)
+        w.after(0, done_wait)  # Busy loop
 
 
     # Draw center
@@ -220,7 +241,12 @@ def main():
             # Handle multiple spinners per map
             for i in range(len(spinners_coords)):
                 coords = spinners_coords[i]
-                key_data = visualize(replay, coords, beatmap)
+
+                # Main visualization call
+                key_data = visualize(replay, coords, beatmap, spinner_ind=i,
+                                     export_ps=True)
+
+
                 print("Returning key from visualization", key_data)
 
                 if key_data == LEGIT_KEY:
