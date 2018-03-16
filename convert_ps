@@ -1,0 +1,6 @@
+#!/bin/sh
+# Default density is 72 dpi
+convert -antialias -background white -alpha remove -delay 1 -verbose -density 144 export/*.ps export/$1.mp4
+ffmpeg -i export/$1.mp4 -r 60 -filter:v "setpts=0.5*PTS" -y export/$1_x2.mp4  # Double speed, 60fps
+rm -f export/*.ps
+

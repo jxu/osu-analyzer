@@ -154,26 +154,35 @@ def visualize(replay, coords, beatmap, width=512, height=384, animate=True,
         w.create_line(coords[w.frame][0], coords[w.frame][1],
                       coords[w.frame+1][0], coords[w.frame+1][1])
 
-        # Export ps test
+        # Export each frame as PostScript
         if export_ps:
             export_filename = \
-                "{}.{}_{}.ps".format(replay.filename, spinner_ind, w.frame)
+                "{}.{}_{}.ps".format(replay.filename, spinner_ind,
+                                     str(w.frame).zfill(4))
             w.update()
             file = os.path.join(EXPORT_DIR, export_filename)
-            ps = w.postscript(file=file,
-                              colormode="color")
-            #with open(file, 'w') as f: f.write(ps)
-            #w.update()
+            w.postscript(file=file, colormode="color")
 
 
         w.frame += 1
-        if w.frame < len(coords) - 1:
+        if w.frame < len(coords) - 1:  # Not done drawing
             w.after(frame_delay, draw_frame)
         else:
-            w.after(0, done_wait())
+            done_wait.converted_ps = False  # Use function as object
+            w.after(0, done_wait)
 
 
     def done_wait():
+        if export_ps and not done_wait.converted_ps:
+            import subprocess
+            CONVERT_SCRIPT = "./convert_ps"
+            video_name = "{}.{}".format(replay.filename, spinner_ind)
+            subprocess.call([CONVERT_SCRIPT, video_name])
+
+            done_wait.converted_ps = True
+            print("Finished export script.")
+
+
         if callback.quit:
             master.destroy()
             return
@@ -188,9 +197,11 @@ def visualize(replay, coords, beatmap, width=512, height=384, animate=True,
     # Add info text
     key_str = "Legit: {}\nCheat: {}\nSkip: {}".format(
         LEGIT_KEY, CHEAT_KEY, SKIP_KEY)
+    font = "Arial 10"
     info_str = replay.player_name + '\n' + beatmap.path
-    w.create_text(5, height-30, text=info_str, anchor=W, width=width)
-    w.create_text(5, 20, text=key_str, anchor=W)
+    w.create_text(5, height-30, text=info_str, anchor=W, width=width,
+                  font=font)
+    w.create_text(5, 20, text=key_str, anchor=W, font=font)
 
 
     draw_frame()
